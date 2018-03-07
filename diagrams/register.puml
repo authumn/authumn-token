@@ -1,0 +1,87 @@
+@startuml
+autonumber "[<b>[000]"
+actor User
+database RedisTokenDatabase
+
+title: Registration Procedure
+
+User -> WebApp: <b>Submit registration form
+WebApp -> TokenService:  \
+<b>Send registration credentials: \n\n\
+ <i>Content-Type: application/x-www-form-urlencoded \n\n\
+ {\n\
+   "$schema": "http://schemas.spec.sh/user/register,"\n\
+   "payload": {\n\
+      "email": "dummy@test.com",\n\
+      "password": "dummy" \n\
+      ...extraInfo/Flags \n\
+   }\n\
+ }
+
+TokenService -> UserService: \
+<b>Forward login credentials: \n\n\
+ <i>Content-Type: application/json \n\n\
+ {\n\
+   "$schema": "http://schemas.spec.sh/user/register",\n\
+   "payload": {\n\
+      "email": "dummy@test.com",\n\
+      "password": "dummy" \n\
+      ...extraInfo/Flags \n\
+   }\n\
+ }
+
+alt Valid credentials
+UserService -> TokenService: \
+<b>Send user info: \n\n\
+ <i>Content-Type: application/json \n\n\
+ {\n\
+   "$schema": "http://schemas.spec.sh/user/profile",\n\
+   "payload": {\n\
+      "email": "dummy@test.com",\n\
+      ...profileInfo \n\
+   }\n\
+ }
+
+TokenService -> RedisTokenDatabase: \
+  Store token
+
+TokenService -> WebApp: \
+<b>Send user info + token: \n\n\
+ <i>Content-Type: application/json \n\
+ <i>Authorization: Bearer <b><(jwt)token> \n\n\
+ {\n\
+   "$schema": "http://schemas.spec.sh/user/profile,"\n\
+   "payload": {\n\
+      "email": "dummy@test.com",\n\
+      ...profileInfo \n\
+   }\n\
+ }
+
+WebApp -> User: Authenticated \n\
+  Owner of JWT to access services\n\
+  Register received schema
+
+else Failure
+UserService -> TokenService: \
+ <b>Send Error Message\n\n\
+ <i>Content-Type: application/json \n\n\
+ {\n \
+  "$schema": "http://schemas.spec.sh/error/http" ||\n\
+  "$schema": "http://schemas.spec.sh/user/error",\n\
+  ...errorMessage \n\
+ }
+TokenService -> WebApp: \
+ <b>Forward Error Message\n\n\
+ <i>Content-Type: application/json \n\n\
+ {\n \
+  "$schema": "http://schemas.spec.sh/error/http" ||\n\
+  "$schema": "http://schemas.spec.sh/user/error",\n\
+  ...errorMessage \n\
+ }
+
+WebApp -> User: Not Authenticated \n\
+  Show error message to user. \n\
+  Show user friendly message for http errors
+end
+
+@enduml
