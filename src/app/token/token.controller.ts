@@ -22,25 +22,21 @@ export class TokenController {
     })
   }
 
-  @Get('/protected')
-  async login (@Req() req, @Res() res, @Next() next) {
+  @Post('/authorize')
+  async authorize (@Req() req, @Res() res, @Next() next) {
     const options = {}
     const request = new Request(req)
     const response = new Response(res)
 
-    try {
-      const token = await this.oauth.authenticate(request, response, options)
+    const code = this.oauth.authorize(request, response, options)
 
-      res.locals.oauth = { token: token }
+    res.locals.oauth = { code: code }
 
-      next()
-    } catch (error) {
-      handleError.call(this, error, req, res, null, next)
-    }
+    return handleResponse.call(this, req, res, response)
   }
 
   @Post('/login')
-  async createToken (@Req() req, @Res() res, @Next() next) {
+  async login (@Req() req, @Res() res, @Next() next) {
     if (!req.body.client_id) {
       req.body.client_id = 'global'
     }
@@ -66,19 +62,6 @@ export class TokenController {
     } catch (error) {
       handleError.call(this, error, req, res, null, next)
     }
-  }
-
-  @Post('/authorize')
-  async protectedZone (@Req() req, @Res() res, @Next() next) {
-    const options = {}
-    const request = new Request(req)
-    const response = new Response(res)
-
-    const code = this.oauth.authorize(request, response, options)
-
-    res.locals.oauth = { code: code }
-
-    return handleResponse.call(this, req, res, response)
   }
 
   @Get('/keys')
