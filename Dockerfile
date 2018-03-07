@@ -16,6 +16,6 @@ COPY package.json yarn.lock ./
 RUN yarn install
 COPY . .
 
-EXPOSE 2302
+EXPOSE 2301
 
 ENTRYPOINT ["npm", "start"]
