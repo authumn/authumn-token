@@ -14,10 +14,10 @@ export const environment = {
     api: process.env.USER_API || 'http://test.com/api/user/login'
   },
   token: {
-    issuer: process.env.JWT_ISSUER || 'https://test.com',
-    expiration_time: 24 * 60 * 60 * 1000,
-    refresh_expiration_time: 10 * 60 * 1000,
-    secretOrPrivateKey: process.env.JWT_SECRET || 'change_me'
+    issuer: process.env.TOKEN_ISSUER || 'https://test.com',
+    expiration_time: parseInt(process.env.TOKEN_EXPIRATION_TIME, 10) || 24 * 60 * 60 * 1000,
+    refresh_expiration_time: parseInt(process.env.TOKEN_REFRESH_EXPIRATION_TIME, 10) || 10 * 60 * 1000,
+    secretOrPrivateKey: process.env.TOKEN_SECRET || 'change_me'
   },
   redis: {
     port: process.env.REDIS_PORT || 6379,
