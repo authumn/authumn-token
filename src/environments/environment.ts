@@ -17,7 +17,7 @@ export const environment = {
     issuer: process.env.TOKEN_ISSUER || 'https://test.com',
     expiration_time: parseInt(process.env.TOKEN_EXPIRATION_TIME, 10) || 24 * 60 * 60 * 1000,
     refresh_expiration_time: parseInt(process.env.TOKEN_REFRESH_EXPIRATION_TIME, 10) || 10 * 60 * 1000,
-    secretOrPrivateKey: process.env.TOKEN_SECRET || 'change_me'
+    secret: process.env.TOKEN_SECRET || 'change_me'
   },
   redis: {
     port: process.env.REDIS_PORT || 6379,

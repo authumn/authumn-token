@@ -1,7 +1,6 @@
 import * as Bluebird from 'bluebird'
 import * as redis from 'redis'
 import { environment } from '../../environments/environment'
-import {TokenServiceRedis} from './oauth2.model.redis'
 
 Bluebird.promisifyAll(redis.RedisClient.prototype)
 

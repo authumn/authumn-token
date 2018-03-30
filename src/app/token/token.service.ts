@@ -66,7 +66,7 @@ export class TokenService {
    * @returns {string}
    */
   secret (userKey) {
-    return [environment.token.secretOrPrivateKey, userKey].join(':')
+    return [environment.token.secret, userKey].join(':')
   }
 
   /**

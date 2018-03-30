@@ -363,9 +363,9 @@ export class OAuth2ModelRedis implements PasswordModel, RefreshTokenModel, Autho
 
     // This should just be a private key.
     // then must work in conjuction with openresty
-    // const secret = [environment.token.secretOrPrivateKey, userKey].join(':')
+    // const secret = [environment.token.secret, userKey].join(':')
 
-    const secret = environment.token.secretOrPrivateKey
+    const secret = environment.token.secret
 
     const jwtid = uuid.v4()
     console.log('our jwtid', jwtid)
