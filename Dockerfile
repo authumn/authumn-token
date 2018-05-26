@@ -1,4 +1,4 @@
-FROM mhart/alpine-node:8
+FROM node:alpine
 
 ENV WHITELIST http://localhost,http://test.com
 ENV PORT 2301
