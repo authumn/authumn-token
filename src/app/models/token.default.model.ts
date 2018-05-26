@@ -275,7 +275,7 @@ export class OAuthDefaultModel {
    * @param scope {Scope} The associated scope.
    * @returns {Promise<Scope | Falsey>}
    */
-  async validateScope (user: User, client: Client, scope: Scope): Promise<Scope | Falsey>  {
+  async validateScope (user: User, client: Client, scope: Scope): Promise<Scope | Falsey> {
 
   }
 

@@ -1,15 +1,18 @@
-import { Component, Inject } from '@nestjs/common'
+import { Injectable, Inject } from '@nestjs/common'
 import { RedisClient } from 'redis'
 import { promisify } from '../models/util'
 import * as axios from 'axios'
 import {
   AccessToken,
+  AccessTokenData,
   Client,
   ClientId,
   ClientSecret,
+  Falsey,
   RefreshToken,
   RefreshTokenData,
-  AccessToken, TokenInfo, Scope, AccessTokenData, Falsey
+  Scope,
+  TokenInfo
 } from '../models/types'
 import {
   AuthorizationCodeModel,
@@ -32,7 +35,7 @@ const KEYS = {
   USER: val => ['users', val].join(':')
 }
 
-@Component()
+@Injectable()
 export class OAuth2ModelRedis implements PasswordModel, RefreshTokenModel, AuthorizationCodeModel {
   constructor (
     @Inject('RedisToken') private redis: RedisClient

@@ -1,4 +1,10 @@
-import { Controller, Inject, Param, Body, Post, HttpStatus, HttpCode, Get, Req, Res, Next } from '@nestjs/common'
+import {
+  Controller,
+  Get,
+  Req,
+  Res,
+  Next, Post
+} from '@nestjs/common'
 import { OAuth2ModelRedis } from './oauth2.model.redis'
 import * as OAuth2Server from 'oauth2-server'
 
@@ -32,7 +38,7 @@ export class TokenController {
 
     res.locals.oauth = { code: code }
 
-    return handleResponse.call(this, req, res, response)
+    return this.handleResponse.call(this, req, res, response)
   }
 
   @Post('/login')
@@ -58,9 +64,9 @@ export class TokenController {
 
       res.locals.oauth = { token: token }
 
-      return handleResponse.call(this, req, res, response)
+      return this.handleResponse(req, res, response)
     } catch (error) {
-      handleError.call(this, error, req, res, null, next)
+      this.handleError(error, req, res, null, next)
     }
   }
 
@@ -68,42 +74,42 @@ export class TokenController {
   async keys () {
     // return this.tokenService.keys()
   }
-}
 
-/**
- * Handle response.
- */
-function handleResponse (req, res, response) {
-  if (response.status === 302) {
-    const location = response.headers.location
+  /**
+   * Handle response.
+   */
+  handleResponse (req, res, response) {
+    if (response.status === 302) {
+      const location = response.headers.location
 
-    delete response.headers.location
+      delete response.headers.location
 
-    res.set(response.headers)
-    res.redirect(location)
-  } else {
-    res.set(response.headers)
-    res.status(response.status).send(response.body)
-  }
-}
-
-/**
- * Handle error.
- */
-function handleError (e, req, res, response, next) {
-  if (this.useErrorHandler === true) {
-    next(e)
-  } else {
-    if (response) {
       res.set(response.headers)
+      res.redirect(location)
+    } else {
+      res.set(response.headers)
+      res.status(response.status).send(response.body)
     }
+  }
 
-    res.status(e.code)
+  /**
+   * Handle error.
+   */
+  handleError (e, req, res, response, next) {
+    if (this.useErrorHandler === true) {
+      next(e)
+    } else {
+      if (response) {
+        res.set(response.headers)
+      }
 
-    if (e instanceof UnauthorizedRequestError) {
-      return res.send()
+      res.status(e.code)
+
+      if (e instanceof UnauthorizedRequestError) {
+        return res.send()
+      }
+
+      res.send({ error: e.name, error_description: e.message })
     }
-
-    res.send({ error: e.name, error_description: e.message })
   }
 }

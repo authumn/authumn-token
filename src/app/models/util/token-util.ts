@@ -1,15 +1,15 @@
 import * as crypto from 'crypto'
-import * as Bluebird from 'bluebird'
+import * as util from 'util'
 
-const randomBytes = Bluebird.promisify(crypto.randomBytes)
+const randomBytes = util.promisify(crypto.randomBytes)
 
 /**
  * Generate random token.
  *
  * @returns {Bluebird<string>}
  */
-export function generateRandomToken() {
-  return randomBytes(256).then(function (buffer) {
+export function generateRandomToken () {
+  return randomBytes(256).then((buffer) => {
     return crypto
       .createHash('sha1')
       .update(buffer)

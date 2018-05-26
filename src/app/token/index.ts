@@ -1,14 +1,12 @@
 import {
-  MiddlewaresConsumer,
+  MiddlewareConsumer,
   Module,
-  NestModule, RequestMethod,
-  Inject
+  NestModule
 } from '@nestjs/common'
 import { TokenService } from './token.service'
 import { OAuth2ModelRedis } from './oauth2.model.redis'
 import { TokenController } from './token.controller'
 import { tokenProviders } from './token.providers'
-import * as oAuthServer from 'express-oauth-server'
 
 @Module({
   components: [
@@ -21,5 +19,5 @@ import * as oAuthServer from 'express-oauth-server'
   ]
 })
 export class TokenModule implements NestModule {
-  public configure ( consumer: MiddlewaresConsumer) { }
+  public configure (_consumer: MiddlewareConsumer) { }
 }

@@ -1,6 +1,9 @@
 import * as jwt from 'jsonwebtoken'
 import * as uuid from 'uuid'
-import { Component, Inject } from '@nestjs/common'
+import {
+  Injectable,
+  Inject
+} from '@nestjs/common'
 import { RedisClient } from 'redis'
 import { environment } from '../../environments/environment'
 import { promisify } from 'util'
@@ -11,7 +14,7 @@ export function createSessionKey (...args) {
   return args.join(':')
 }
 
-@Component()
+@Injectable()
 export class TokenService {
   constructor (
     @Inject('RedisToken') private redis: RedisClient
@@ -22,7 +25,7 @@ export class TokenService {
    * @param deviceId
    * @returns {Promise<Promise<any> & number & Buffer & string & PromiseLike<ArrayBuffer>>}
    */
-  async sign (user, deviceId): Promise<string> {
+  async sign (user: string, deviceId: string): Promise<string> {
     const userKey = uuid.v4()
     const issuedAt = Math.floor(Date.now() / 1000)
 
@@ -53,10 +56,15 @@ export class TokenService {
 
     const sessionKey = createSessionKey('specsh', user._id, deviceId, issuedAt)
 
-    await this.redis.setAsync(sessionKey, userKey)
-    await this.redis.expireAsync(sessionKey, environment.token.expiration_time)
+    const writeSessionKey = await this.redis.hmset(sessionKey, userKey)
 
-    return token
+    if (writeSessionKey === 'OK') {
+      await this.redis.expireAsync(sessionKey, environment.token.expiration_time)
+
+      return token
+    }
+
+    throw Error('Failed to write session key.')
   }
 
   /**
@@ -65,7 +73,7 @@ export class TokenService {
    * @param userKey
    * @returns {string}
    */
-  secret (userKey) {
+  secret (userKey: string): string {
     return [environment.token.secret, userKey].join(':')
   }
 
@@ -75,8 +83,8 @@ export class TokenService {
    * @param {string} sessionKey
    * @returns {Promise<any>}
    */
-  async get (sessionKey: string) {
-    return this.redis.getAsync(sessionKey)
+  async get (sessionKey: string): Promise<string> {
+    return this.redis.hmgetAsync(sessionKey)
   }
 
   /**
@@ -86,7 +94,7 @@ export class TokenService {
    * @returns {Promise<any>}
    */
   async delete (sessionKey: string) {
-    return this.redis.delAsync(sessionKey)
+    return this.redis.hdelAsync(sessionKey)
   }
 
   /**
