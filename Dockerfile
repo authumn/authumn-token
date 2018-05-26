@@ -12,8 +12,8 @@ ENV REDIS_HOST localhost
 ENV REDIS_DATABASE 0
 
 WORKDIR /app
-COPY package.json yarn.lock ./
-RUN yarn install
+COPY package.json package-lock.json ./
+RUN npm install
 COPY . .
 
 EXPOSE 2301
