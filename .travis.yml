@@ -5,6 +5,7 @@ jobs:
       node_js: '10'
       services:
         - docker
+        - redis-server
       script:
         - npm run test
         - docker build -t authumn/token-service .
