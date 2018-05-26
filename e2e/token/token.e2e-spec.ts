@@ -29,7 +29,7 @@ describe('TokenService', () => {
       .get('/token')
       .expect(200)
       .expect({
-        data: tokenService.findAll(),
+        data: tokenService.findAll()
       })
   })
 

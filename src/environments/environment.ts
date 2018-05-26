@@ -10,21 +10,36 @@ if (process.env.WHITELIST) {
     .map((str) => str.trim())
 }
 
+const {
+  PORT,
+  USER_API,
+  TOKEN_EXPIRATION_TIME,
+  TOKEN_REFRESH_EXPIRATION_TIME,
+  TOKEN_ISSUER,
+  TOKEN_SECRET,
+  REDIS_PORT,
+  REDIS_HOST,
+  REDIS_DATABASE
+} = process.env
+
 export const environment = {
-  port: process.env.PORT || 2301,
+  client: {
+    id: 'authumn'
+  },
+  port: PORT || 2301,
   user: {
-    api: process.env.USER_API || 'http://test.com/api/user/login'
+    api: USER_API || 'http://test.com/api/user/login'
   },
   token: {
-    issuer: process.env.TOKEN_ISSUER || 'https://test.com',
-    expiration_time: parseInt(process.env.TOKEN_EXPIRATION_TIME, 10) || 24 * 60 * 60 * 1000,
-    refresh_expiration_time: parseInt(process.env.TOKEN_REFRESH_EXPIRATION_TIME, 10) || 10 * 60 * 1000,
-    secret: process.env.TOKEN_SECRET || 'change_me'
+    issuer: TOKEN_ISSUER || 'https://test.com',
+    expiration_time: TOKEN_EXPIRATION_TIME ? parseInt(TOKEN_EXPIRATION_TIME, 10) : 24 * 60 * 60 * 1000,
+    refresh_expiration_time: TOKEN_REFRESH_EXPIRATION_TIME ? parseInt(TOKEN_REFRESH_EXPIRATION_TIME, 10) : 10 * 60 * 1000,
+    secret: TOKEN_SECRET || 'change_me'
   },
   redis: {
-    port: process.env.REDIS_PORT || 6379,
-    host: process.env.REDIS_HOST || 'localhost',
-    database: process.env.REDIS_DATABASE || 0
+    port: REDIS_PORT ? parseInt(REDIS_PORT, 10) : 6379,
+    host: REDIS_HOST || 'localhost',
+    database: REDIS_DATABASE || 0
   },
   whitelist
 }

@@ -22,9 +22,9 @@ export class TokenController {
     private readonly oAuthModel: OAuth2ModelRedis
   ) {
     this.oauth = new OAuth2Server({
-      model: oAuthModel,
-      grants: ['password', 'authorization_code', 'refresh_token'],
-      debug: true
+      model: oAuthModel
+      // grants: ['password', 'authorization_code', 'refresh_token'],
+      // debug: true
     })
   }
 
@@ -96,20 +96,16 @@ export class TokenController {
    * Handle error.
    */
   handleError (e, req, res, response, next) {
-    if (this.useErrorHandler === true) {
-      next(e)
-    } else {
-      if (response) {
-        res.set(response.headers)
-      }
-
-      res.status(e.code)
-
-      if (e instanceof UnauthorizedRequestError) {
-        return res.send()
-      }
-
-      res.send({ error: e.name, error_description: e.message })
+    if (response) {
+      res.set(response.headers)
     }
+
+    res.status(e.code)
+
+    if (e instanceof UnauthorizedRequestError) {
+      return res.send()
+    }
+
+    res.send({ error: e.name, error_description: e.message })
   }
 }

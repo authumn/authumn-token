@@ -1,3 +1,5 @@
+/* tslint:disable */
+
 import {
   AccessToken,
   AccessTokenData,
@@ -16,19 +18,97 @@ import {
   Username
 } from './types'
 
-import { generateRandomToken } from './util/token-util'
-
-export class OAuthDefaultModel {
+export class OAuthModel {
+  /**
+   * Invoked to generate a new access token.
+   *
+   * This model function is optional.
+   *
+   * If not implemented, a default handler is used.
+   *
+   * That generates access tokens consisting of 40 characters in the range of a..z0..9.
+   *
+   * Invoked during:
+   *
+   *  - `authorization_code` grant
+   *  - `client_credentials` grant
+   *  - `refresh_token` grant
+   *  - `password` grant
+   *
+   *  Remarks:
+   *
+   *  `client` is the object previously obtained through Model#getClient()
+   *
+   *  `user` is the user object previously obtained through:
+   *
+   *  - Model#getAuthorizationCode(): authorization grant
+   *  - Model#getUserFromClient(): client credentials grant
+   *  - Model#getRefreshToken(): refresh token grant
+   *  - Model#getUser(): password grant
+   *
+   * @param client {Client} The client the access token is generated for.
+   * @param user {User} The user the access token is generated for.
+   * @param scope {Scope} The scopes associated with the access token. Can be `null`
+   * @returns {Promise<AccessToken>} A `string` to be used as access token.
+   */
   async generateAccessToken (client: Client, user: User, scope: Scope): Promise<AccessToken> {
-    return generateRandomToken() as Promise
+
   }
 
+  /**
+   * Invoked to generate a new refresh token.
+   *
+   * This model function is optional.
+   *
+   * If not implemented, a default handler is used.
+   *
+   * That generates refresh tokens consisting of 40 characters in the range of a..z0..9.
+   *
+   * Invoked during:
+   *
+   *   - authorization_code grant
+   *   - refresh_token grant
+   *   - password grant
+   *
+   * Remarks:
+   *
+   * `client` is the object previously obtained through Model#getClient()
+   *
+   *  `user` is the user object previously obtained through:
+   *
+   *  - Model#getAuthorizationCode(): authorization grant
+   *  - Model#getRefreshToken(): refresh token grant
+   *  - Model#getUser(): password grant
+   *
+   * @param client {Client} The client the refresh token is generated for.
+   * @param user {User} The user the refresh token is generated for.
+   * @param scope {Scope} The scopes associated with the refresh token.
+   * @returns {Promise<RefreshToken>}
+   */
   async generateRefreshToken (client: Client, user: User, scope: Scope): Promise<RefreshToken> {
-    return generateRandomToken() as Promise
+
   }
 
+  /**
+   * Invoked to generate a new authorization code.
+   *
+   * This model function is optional.
+   *
+   * If not implemented, a default handler is used.
+   *
+   * That generates authorization codes consisting of 40 characters in the range of a..z0..9.
+   *
+   * Invoked during:
+   *
+   *   - authorization_code grant
+   *
+   * @param client {Client} The client the authorization code is generated for.
+   * @param user {User} The user the authorization code is generated for.
+   * @param scope {Scope} The scopes associated with the authorization code. Can be `null`
+   * @returns {Promise<AuthorizationCode>}
+   */
   async generateAuthorizationCode (client: Client, user: User, scope: Scope): Promise<AuthorizationCode> {
-    return generateRandomToken() as Promise
+
   }
 
   /**
@@ -275,7 +355,7 @@ export class OAuthDefaultModel {
    * @param scope {Scope} The associated scope.
    * @returns {Promise<Scope | Falsey>}
    */
-  async validateScope (user: User, client: Client, scope: Scope): Promise<Scope | Falsey> {
+  async validateScope (user: User, client: Client, scope: Scope): Promise<Scope | Falsey>  {
 
   }
 

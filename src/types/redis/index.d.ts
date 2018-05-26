@@ -1,3 +1,4 @@
+// tslint:disable-next-line
 import * as redis from 'redis'
 
 declare module 'redis' {
@@ -12,9 +13,11 @@ declare module 'redis' {
   }
 
   export interface RedisClient extends NodeJS.EventEmitter {
-    hmsetAsync: redis.OverloadedSetCommand<string | number, boolean>
+    hmsetAsync: OverloadedSetCommandAsync<string | number, string>
+    keysAsync (pattern: string): Promise<string[]>
+    delAsync (key: string): Promise<number>
 
-    expireAsync(key: string, seconds: number): Promise<number>
+    expireAsync (key: string, seconds: number): Promise<number>
     getAsync (key: string): Promise<string>
     getbitAsync (key: string, offset: number): Promise<number>
     getrangeAsync (key: string, start: number, end: number): Promise<string>
@@ -22,10 +25,11 @@ declare module 'redis' {
     hdelAsync (key: string, fields: string[]): Promise<number>
     hexistsAsync (key: string, field: string): Promise<number>
     hgetAsync (key: string, field: string): Promise<string>
-    hgetallAsync (key: string): Promise<{ [key: string]: string }>
+    hgetallAsync (key: string): Promise<string>
     hmgetAsync (key: string, fields: string[]): Promise<string[]>
     hsetAsync (key: string, field: string, value: string): Promise<number>
     hsetnxAsync (key: string, field: string, value: string): Promise<number>
-    setAsync (key: string, values: string): Promise<number>
+
+    setAsync (key: string, values: string): Promise<string>
   }
 }

@@ -8,7 +8,7 @@ const randomBytes = util.promisify(crypto.randomBytes)
  *
  * @returns {Bluebird<string>}
  */
-export function generateRandomToken () {
+export function generateRandomToken (): Promise<string> {
   return randomBytes(256).then((buffer) => {
     return crypto
       .createHash('sha1')

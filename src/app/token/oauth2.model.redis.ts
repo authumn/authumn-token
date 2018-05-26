@@ -1,29 +1,39 @@
 import { Injectable, Inject } from '@nestjs/common'
 import { RedisClient } from 'redis'
-import { promisify } from '../models/util'
-import * as axios from 'axios'
+import axios from 'axios'
 import {
-  AccessToken,
   AccessTokenData,
-  Client,
-  ClientId,
-  ClientSecret,
+  // Client,
   Falsey,
-  RefreshToken,
   RefreshTokenData,
-  Scope,
   TokenInfo
 } from '../models/types'
 import {
-  AuthorizationCodeModel,
+  Client,
   PasswordModel,
-  RefreshTokenModel,
   Token,
   User
 } from 'oauth2-server'
 import { environment } from '../../environments/environment'
 import * as uuid from 'uuid'
 import * as jwt from 'jsonwebtoken'
+
+export function serializeToken (token: Token, client: Client, user: User): string {
+  return JSON.stringify({
+    client,
+    user,
+    scope: '',
+    ...token
+  })
+}
+
+export function deserializeToken (token: string): Token {
+  return JSON.parse(token)
+}
+
+export type DecodedToken = {
+  jti: string
+}
 
 const GRANT_TYPE = 'password'
 
@@ -36,7 +46,7 @@ const KEYS = {
 }
 
 @Injectable()
-export class OAuth2ModelRedis implements PasswordModel, RefreshTokenModel, AuthorizationCodeModel {
+export class OAuth2ModelRedis implements PasswordModel { // , RefreshTokenModel, AuthorizationCodeModel {
   constructor (
     @Inject('RedisToken') private redis: RedisClient
   ) {
@@ -59,8 +69,10 @@ export class OAuth2ModelRedis implements PasswordModel, RefreshTokenModel, Autho
    * @param accessToken
    * @returns {Promise<AccessTokenData>} AccessTokenData
    */
-  async getAccessToken (accessToken: AccessToken): Promise<Token> {
-    return this.redis.hgetallAsync(KEYS.TOKEN(accessToken))
+  async getAccessToken (accessToken: string): Promise<Token> {
+    return deserializeToken(
+      await this.redis.hgetallAsync(KEYS.TOKEN(accessToken))
+    )
   }
 
   /**
@@ -79,7 +91,7 @@ export class OAuth2ModelRedis implements PasswordModel, RefreshTokenModel, Autho
    * @param refreshToken
    * @returns {Promise<RefreshTokenData>} RefreshTokenData
    */
-  async getRefreshToken (refreshToken: RefreshToken): Promise<RefreshTokenData> {
+  async getRefreshToken (refreshToken: string): Promise<any> {
     return this.redis.hgetallAsync(KEYS.REFRESH_TOKEN(refreshToken))
   }
 
@@ -120,18 +132,20 @@ export class OAuth2ModelRedis implements PasswordModel, RefreshTokenModel, Autho
    *
    * Me: GRANT_TYPE is set just to emphasize the why.
    *
-   * @param clientId {ClientId} The client id of the client to retrieve.
-   * @param clientSecret {ClientSecret} The client secret of the client to retrieve. Can be `null`
+   * @param clientId {string} The client id of the client to retrieve.
+   * @param clientSecret {string} The client secret of the client to retrieve. Can be `null`
    * @returns {Promise<Client>}
    */
-  async getClient (clientId: ClientId, clientSecret: ClientSecret): Promise<Client> {
+  async getClient (clientId: string, clientSecret: string): Promise<Client> {
     if (GRANT_TYPE === 'password') {
       return {
         id: clientId,
-        redirectUris: null,
+        // redirectUris: null,
         grants: ['password']
       }
     } else {
+      throw Error('Only password grant type supported.')
+      /*
       const json = await this.redis.hgetallAsync(KEYS.CLIENT(clientId))
       const client = JSON.parse(json)
 
@@ -141,6 +155,7 @@ export class OAuth2ModelRedis implements PasswordModel, RefreshTokenModel, Autho
       }
 
       return client
+      */
     }
   }
 
@@ -153,33 +168,6 @@ export class OAuth2ModelRedis implements PasswordModel, RefreshTokenModel, Autho
    *
    *   - `password` grant
    *
-   * Me:
-   *
-   * I don't want to store that in redis though..
-   *
-   * I wanted to do the internal or external trick here (support both)
-   *
-   * I think this is the most important method and where will be
-   * the most variation, all other methods are just temporary.
-   *
-   * (Except from client credentials and scope)
-   *
-   * Which means there are many policies to get the user.
-   *
-   * Scope *is* interesting because it will give access control.
-   *
-   * I think here I want to inject the userService.
-   *
-   * So perhaps clean this repo up, and merge it again with *auth* server.
-   *
-   * And then perhaps start several instances in different roles.
-   *
-   * However the distinction is nice and I already have the other server setup up
-   * for logins and registration.
-   *
-   * However the pattern here is a bit difficult.
-   * Ah not really just do a request here and wait for it.
-   *
    * @param username {Username} The username of the user to retrieve
    * @param password {Password} The user's password
    * @returns {Promise<User>} An Object representing the user,
@@ -187,7 +175,7 @@ export class OAuth2ModelRedis implements PasswordModel, RefreshTokenModel, Autho
    *                          The user object is completely transparent to oauth2-server
    *                          and is simply used as input to other model functions.
    */
-  async getUser (username, password): Promise<User | boolean> {
+  async getUser (username: string, password: string): Promise<User | false> {
     const body = {
       email: username,
       password
@@ -237,30 +225,30 @@ export class OAuth2ModelRedis implements PasswordModel, RefreshTokenModel, Autho
    * @param token {TokenInfo} The token(s) to be saved.
    * @param client {Client} The client associated with the token(s).
    * @param user {User} The user associated with the token(s).
-   * @returns {Promise<TokenInfo>}
+   * @returns {Promise<Token>}
    */
-  async saveToken (token: TokenInfo, client: Client, user: User) {
-    const jti = jwt.decode(token.accessToken).jti
-    const data: TokenInfo = {
-      accessToken: token.accessToken,
-      accessTokenExpiresAt: token.accessTokenExpiresAt,
-      client: JSON.stringify(client),
-      refreshToken: token.refreshToken,
-      refreshTokenExpiresAt: token.refreshTokenExpiresAt,
-      user: JSON.stringify(user)
+  async saveToken (token: Token, client: Client, user: User): Promise<Token> {
+    const decoded = jwt.decode(token.accessToken) as DecodedToken
+
+    if (decoded.jti) {
+      const jti = decoded.jti
+
+      const data = serializeToken(token, client, user)
+
+      const writeAccessToken = await this.redis.hmsetAsync(KEYS.TOKEN(jti), data) as string
+      const writeRefreshToken = await this.redis.hmsetAsync(KEYS.TOKEN(token.refreshToken), data) as string
+
+      await this.redis.expireAsync(KEYS.TOKEN(token.accessToken), environment.token.expiration_time)
+      await this.redis.expireAsync(KEYS.TOKEN(token.refreshToken), environment.token.refresh_expiration_time)
+
+      if (writeAccessToken === 'OK' && writeRefreshToken === 'OK') {
+        return token
+      }
+
+      throw Error('Failed to write tokens')
     }
 
-    const writeAccessToken = await this.redis.hmsetAsync(KEYS.TOKEN(jti), data)
-    const writeRefreshToken = await this.redis.hmsetAsync(KEYS.TOKEN(token.refreshToken), data)
-
-    await this.redis.expireAsync(KEYS.TOKEN(token.accessToken), environment.token.expiration_time)
-    await this.redis.expireAsync(KEYS.TOKEN(token.refreshToken), environment.token.refresh_expiration_time)
-
-    if (writeAccessToken === 'OK' && writeRefreshToken === 'OK') {
-      return data
-    }
-
-    throw Error('Failed to write tokens')
+    throw Error('Invalid token.')
   }
 
   /**
@@ -280,10 +268,10 @@ export class OAuth2ModelRedis implements PasswordModel, RefreshTokenModel, Autho
    * @returns {Promise<boolean>} Return `true` if the revocation was successful or `false` if the refresh token could not be found.
    */
   async revokeToken (token: TokenInfo): Promise<boolean> {
-    const refreshToken = await this.redis.hmgetAsync(KEYS.TOKEN(token.refreshToken))
+    const refreshToken = await this.redis.getAsync(KEYS.TOKEN(token.refreshToken))
 
     if (refreshToken) {
-      await this.redis.hdelAsync(KEYS.TOKEN(token.refreshToken))
+      await this.redis.delAsync(KEYS.TOKEN(token.refreshToken))
 
       return true
     }
@@ -310,7 +298,7 @@ export class OAuth2ModelRedis implements PasswordModel, RefreshTokenModel, Autho
    * @param scope {Scope} The required scopes.
    * @returns {Promise<boolean>}
    */
-  async verifyScope (accessToken: AccessTokenData, scope: Scope): Promise<boolean> {
+  async verifyScope (accessToken: Token, scope: string): Promise<boolean> {
     if (!accessToken.scope) {
       return false
     }
@@ -342,7 +330,7 @@ export class OAuth2ModelRedis implements PasswordModel, RefreshTokenModel, Autho
    * @param scope {Scope} The scopes associated with the access token. Can be `null`.
    * @returns {Promise<AccessToken>}
    */
-  async generateAccessToken (client: Client, user: User, scope: Scope): Promise<AccessToken> {
+  async generateAccessToken (client: Client, user: User, scope: string): Promise<string> {
     const userKey = uuid.v4()
     const issuedAt = Math.floor(Date.now() / 1000)
 
@@ -352,7 +340,6 @@ export class OAuth2ModelRedis implements PasswordModel, RefreshTokenModel, Autho
     // https://github.com/zmartzone/lua-resty-openidc/blob/cc66a454e1e63524459a8352c027fb96833d84a6/tests/spec/test_support.lua
     const payload = {
       iss: environment.token.issuer,
-      sub: user.email, // in openID context using user's email does not seem to be correct.
       aud: 'client_id', // TODO: should be set properly
       scopes: [], // not in openID connect.. ?
       email: user.email,

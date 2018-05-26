@@ -7,11 +7,42 @@ import {
 import { RedisClient } from 'redis'
 import { environment } from '../../environments/environment'
 import { promisify } from 'util'
+import { User } from '../models/types'
 
 const signJwt = promisify(jwt.sign)
 
+/**
+ * TODO: double check this
+ *
+ * @param userKey
+ * @returns {string}
+ */
+export function secret (userKey: string): string {
+  return [environment.token.secret, userKey].join(':')
+}
+
 export function createSessionKey (...args) {
   return args.join(':')
+}
+
+export function createToken (user, userKey, payload) {
+  return jwt.sign(
+    payload,
+    secret(userKey),
+    {
+      algorithm: 'HS256',
+      expiresIn: environment.token.expiration_time
+      // jwtid: environment.token.jwtid || ''
+      // notBefore:
+      // audience:
+      // issuer:
+      // jwtid:
+      // subject:
+      // noTimestamp
+      // header
+      // keyId
+    }
+  )
 }
 
 @Injectable()
@@ -25,7 +56,7 @@ export class TokenService {
    * @param deviceId
    * @returns {Promise<Promise<any> & number & Buffer & string & PromiseLike<ArrayBuffer>>}
    */
-  async sign (user: string, deviceId: string): Promise<string> {
+  async sign (user: User, deviceId: string | null = null): Promise<string> {
     const userKey = uuid.v4()
     const issuedAt = Math.floor(Date.now() / 1000)
 
@@ -36,45 +67,23 @@ export class TokenService {
       iat: issuedAt
     }
 
-    const token = jwt.sign(
-      payload,
-      this.secret(userKey),
-      {
-        algorithm: 'HS256',
-        expiresIn: environment.token.expiration_time,
-        jwtid: environment.token.jwt_id || ''
-        // notBefore:
-        // audience:
-        // issuer:
-        // jwtid:
-        // subject:
-        // noTimestamp
-        // header
-        // keyId
-      }
-    )
+    const token = createToken(user, userKey, payload)
 
-    const sessionKey = createSessionKey('specsh', user._id, deviceId, issuedAt)
+    const sessionKey = createSessionKey(environment.client.id, user._id, deviceId, issuedAt)
 
-    const writeSessionKey = await this.redis.hmset(sessionKey, userKey)
+    const writeSessionKey = await this.redis.setAsync(sessionKey, userKey)
 
     if (writeSessionKey === 'OK') {
-      await this.redis.expireAsync(sessionKey, environment.token.expiration_time)
+      const expireAsyncResult = await this.redis.expireAsync(sessionKey, environment.token.expiration_time)
 
-      return token
+      if (expireAsyncResult === 1) {
+        return token
+      }
+
+      throw Error('Failed to set expire.')
     }
 
     throw Error('Failed to write session key.')
-  }
-
-  /**
-   * TODO: double check this
-   *
-   * @param userKey
-   * @returns {string}
-   */
-  secret (userKey: string): string {
-    return [environment.token.secret, userKey].join(':')
   }
 
   /**
@@ -84,7 +93,7 @@ export class TokenService {
    * @returns {Promise<any>}
    */
   async get (sessionKey: string): Promise<string> {
-    return this.redis.hmgetAsync(sessionKey)
+    return this.redis.getAsync(sessionKey)
   }
 
   /**
@@ -94,7 +103,7 @@ export class TokenService {
    * @returns {Promise<any>}
    */
   async delete (sessionKey: string) {
-    return this.redis.hdelAsync(sessionKey)
+    return this.redis.delAsync(sessionKey)
   }
 
   /**
