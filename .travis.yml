@@ -1,0 +1,19 @@
+jobs:
+  include:
+    - stage: release
+      language: node_js
+      node_js: '10'
+      services:
+        - docker
+      script:
+        - npm run test
+        - docker build -t authumn/token-service .
+        - npm run semantic-release
+stages:
+  - test
+  - name: release
+    if: branch = master AND type = push AND fork = false
+
+branches:
+  except:
+    - /^v\d+\.\d+\.\d+$/
