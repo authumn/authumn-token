@@ -26,4 +26,10 @@ Post()
 Post()
 `http://localhost:2303/token/refresh : Refresh token
 
+### Diagram
+
+Broad overview of the login procedure, registration follows a similar path.
+
+![alt text](diagrams/login.png "Description goes here")
+
 
