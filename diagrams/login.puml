@@ -1,18 +1,24 @@
 @startuml
 autonumber "[<b>[000]"
 actor User
-database RedisTokenDatabase
 
 title: Login Procedure
 
 User -> WebApp: Submit login form
-WebApp -> TokenService:  \
+
+
+WebApp -> Gateway: \
 Send login credentials: \n\
  Content-Type: application/x-www-form-urlencoded \n\
  {\n \
   "email": "dummy@test.com",\n\
   "password": "dummy" \n\
  }
+
+activate Gateway
+
+Gateway -> TokenService: Proxy Request
+activate TokenService
 
 TokenService -> UserService: \
 Forward login credentials: \n\n\
@@ -21,6 +27,9 @@ Forward login credentials: \n\n\
   "email": "dummy@test.com",\n\
   "password": "dummy" \n\
  }
+activate UserService
+
+database RedisTokenDatabase
 
 alt Valid credentials
 UserService -> TokenService: \
@@ -31,10 +40,20 @@ UserService -> TokenService: \
   ...profileInfo \n\
  }
 
+deactivate UserService
+
+TokenService -> TokenService: Create JWT
+
 TokenService -> RedisTokenDatabase: \
   Store token
+activate RedisTokenDatabase
+TokenService <- RedisTokenDatabase:
+deactivate RedisTokenDatabase
 
-TokenService -> WebApp: \
+TokenService -> Gateway: Proxy Response
+deactivate TokenService
+
+Gateway -> WebApp: \
  Content-Type: application/json \n\
  Authorization: Bearer <(jwt)token> \n\
  {\n \
@@ -42,9 +61,29 @@ TokenService -> WebApp: \
   "username": "dummy" \n\
   ...profileInfo \n\
  }
+deactivate Gateway
 
 WebApp -> User: Authenticated \n\
   Owner of JWT to access services
+
+User -> Gateway: Access Protected Service
+activate Gateway
+
+Gateway -> RedisTokenDatabase: Validate Token
+activate RedisTokenDatabase
+
+Gateway <- RedisTokenDatabase: Token Validated
+deactivate RedisTokenDatabase
+
+Gateway -> ApiService: Authorized Request
+activate ApiService
+
+Gateway <- ApiService: Response {...}
+deactivate ApiService
+
+Gateway -> WebApp: Response {...}
+deactivate Gateway
+WebApp -> User: Response {...}
 
 else Failure
 UserService -> TokenService: \
@@ -52,6 +91,7 @@ UserService -> TokenService: \
  {\n \
   ...errorMessage \n\
  }
+
 TokenService -> WebApp: \
  Forward Error Message\n\
  Content-Type: application/json \n\
