@@ -14,6 +14,9 @@ $ yarn start
 
 ### API
 
+Login()
+`http://localhost:2303/token/login`: Checks Credentials with the user service and directly sends back a JWT token. 
+
 Delete()
 `http://localhost:2303/token/reject`: Revoke token
 
