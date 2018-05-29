@@ -10,7 +10,7 @@
     "start": "node index.js",
     "watch": "tsc -w",
     "serve": "nodemon --exec ts-node -- --inspect ./src/server.ts",
-    "test": "jest --config=jest.json --forceExit",
+    "test": "jest --config=jest.json",
     "test:watch": "jest --watch --config=jest.json",
     "e2e": "jest --config=e2e/jest-e2e.json --forceExit",
     "e2e:watch": "jest --watch --config=e2e/jest-e2e.json",

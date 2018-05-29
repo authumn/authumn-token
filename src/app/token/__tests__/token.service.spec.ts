@@ -3,13 +3,15 @@ import { expect } from 'chai'
 import { TokenService } from '../token.service'
 import { environment } from '../../../environments/environment'
 import { createRedisToken } from '../../providers'
+import { RedisClient } from 'redis'
 
 const redisToken = createRedisToken(environment.redis)
 
 describe('TokenService', () => {
   let tokenService: TokenService
+  let redis: RedisClient
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const module = await Test.createTestingModule({
       providers: [
         TokenService,
@@ -18,6 +20,11 @@ describe('TokenService', () => {
     }).compile()
 
     tokenService = module.get<TokenService>(TokenService)
+    redis = module.get<RedisClient>('RedisToken')
+  })
+
+  afterAll((done) => {
+    redis.quit(done)
   })
 
   describe('sign', () => {
