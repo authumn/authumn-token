@@ -1,5 +1,4 @@
 
-
 let whitelist = [
   'http://localhost:2301',
   'http://authumn'

@@ -7,7 +7,7 @@ export function createRedisToken (config: any) { // redis.ClientOpts) {
   return {
     provide: 'RedisToken',
 
-    useFactory: async (): RedisClient => {
+    useFactory: async (): Promise<RedisClient> => {
       const client: RedisClient = createClient(config)
 
       client.on('connect', () => {

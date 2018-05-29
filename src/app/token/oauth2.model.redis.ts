@@ -63,6 +63,8 @@ export class OAuth2ModelRedis implements PasswordModel { // , RefreshTokenModel,
         await this.redis.getAsync(KEYS.TOKEN(decoded.jti))
       )
     }
+
+    throw Error('Unable to retrieve access token.')
   }
 
   /**
@@ -335,7 +337,7 @@ export class OAuth2ModelRedis implements PasswordModel { // , RefreshTokenModel,
    * @param scope {string} The scopes associated with the access token. Can be `null`.
    * @returns {Promise<string>}
    */
-  async generateAccessToken (client: Client, user: User, scope: string = null): Promise<string> {
+  async generateAccessToken (client: Client, user: User, scope?: string): Promise<string> {
     const userKey = uuid.v4()
     const issuedAt = Math.floor(Date.now() / 1000)
 
@@ -346,7 +348,7 @@ export class OAuth2ModelRedis implements PasswordModel { // , RefreshTokenModel,
     const payload = {
       iss: environment.token.issuer,
       aud: 'client_id', // TODO: should be set properly
-      scopes: [], // not in openID connect.. ?
+      scope,
       email: user.email,
       // email_verified: ...
       sub: user.id || 'unique id missing',
