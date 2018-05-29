@@ -16,6 +16,7 @@ export interface Client {
   grants: string[]
   accessTokenLifetime?: number
   refreshTokenLifetime?: number
+  [key: string]: any
 }
 
 // The user object is completely transparent to oauth2-server
@@ -23,6 +24,7 @@ export interface Client {
 export interface User {
   _id: string
   email: string
+  [key: string]: any
 }
 
 export interface AccessTokenData {
