@@ -167,12 +167,12 @@ export class OAuth2ModelRedis implements PasswordModel { // , RefreshTokenModel,
    *                          and is simply used as input to other model functions.
    */
   async getUser (username: string, password: string): Promise<User | false> {
-    const body = {
+    const data = {
       email: username,
       password
     }
 
-    console.log('Sending', body, 'to', environment.user.api)
+    console.log('Sending', data, 'to', environment.user.api)
 
     const user = await axios({
       method: 'post',
@@ -180,7 +180,7 @@ export class OAuth2ModelRedis implements PasswordModel { // , RefreshTokenModel,
       headers: {
         'Content-Type': 'application/json'
       },
-      data: body
+      data
     })
 
     if (user && user.data && user.data.email) {

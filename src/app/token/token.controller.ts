@@ -3,12 +3,24 @@ import {
   Get,
   Req,
   Res,
-  Next, Post
+  Next, Post, UseFilters
 } from '@nestjs/common'
 import { OAuth2ModelRedis } from './oauth2.model.redis'
 import * as OAuth2Server from 'oauth2-server'
 
 const UnauthorizedRequestError = require('oauth2-server/lib/errors/unauthorized-request-error')
+
+import {
+  HttpExceptionFilter,
+  validationErrorHandler,
+  jsonWebTokenErrorHandler
+} from '@nestling/errors'
+
+import { oauth2ServerErrorHandler } from './token.errors'
+
+HttpExceptionFilter.addExceptionHandler(validationErrorHandler)
+HttpExceptionFilter.addExceptionHandler(jsonWebTokenErrorHandler)
+HttpExceptionFilter.addExceptionHandler(oauth2ServerErrorHandler)
 
 const {
   Request,
@@ -16,6 +28,7 @@ const {
 } = OAuth2Server
 
 @Controller('token')
+@UseFilters(new HttpExceptionFilter())
 export class TokenController {
   oauth: OAuth2Server
   constructor (
@@ -59,15 +72,11 @@ export class TokenController {
     const request = new Request(req)
     const response = new Response(res)
 
-    try {
-      const token = await this.oauth.token(request, response, options)
+    const token = await this.oauth.token(request, response, options)
 
-      res.locals.oauth = { token: token }
+    res.locals.oauth = { token: token }
 
-      return this.handleResponse(req, res, response)
-    } catch (error) {
-      this.handleError(error, req, res, null, next)
-    }
+    return this.handleResponse(req, res, response)
   }
 
   @Get('/keys')
@@ -90,22 +99,5 @@ export class TokenController {
       res.set(response.headers)
       res.status(response.status).send(response.body)
     }
-  }
-
-  /**
-   * Handle error.
-   */
-  handleError (e, req, res, response, next) {
-    if (response) {
-      res.set(response.headers)
-    }
-
-    res.status(e.code)
-
-    if (e instanceof UnauthorizedRequestError) {
-      return res.send()
-    }
-
-    res.send({ error: e.name, error_description: e.message })
   }
 }
