@@ -77,7 +77,12 @@ describe('Oauth2 Model Redis', () => {
       user
     }
 
-    expect(await model.saveToken(token, client, user)).to.eql(token)
+    expect(await model.saveToken(token, client, user)).to.eql({
+      client,
+      user,
+      scope: '',
+      ...token
+    })
   })
 
   it('can retrieve access token', async () => {

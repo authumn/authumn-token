@@ -224,32 +224,32 @@ export class OAuth2ModelRedis implements PasswordModel { // , RefreshTokenModel,
     if (decoded.jti) {
       const jti = decoded.jti
 
-      const accessTokenData = JSON.stringify({
+      const accessTokenData = {
         client,
         user,
         scope: '',
         ...token
-      })
+      }
 
-      const refreshTokenData = JSON.stringify({
+      const refreshTokenData = {
         refreshToken: token.refreshToken,
         refreshTokenExpireAt: token.refreshTokenExpiresAt,
         scope: token.scope,
         client,
         user
-      })
+      }
 
       const accessTokenKey = KEYS.TOKEN(jti)
       const refreshTokenKey = KEYS.REFRESH_TOKEN(token.refreshToken)
 
-      const writeAccessToken = await this.redis.setAsync(accessTokenKey, accessTokenData) as string
-      const writeRefreshToken = await this.redis.setAsync(refreshTokenKey, refreshTokenData) as string
+      const writeAccessToken = await this.redis.setAsync(accessTokenKey, JSON.stringify(accessTokenData)) as string
+      const writeRefreshToken = await this.redis.setAsync(refreshTokenKey, JSON.stringify(refreshTokenData)) as string
 
       await this.redis.expireAsync(accessTokenKey, environment.token.expiration_time)
       await this.redis.expireAsync(refreshTokenKey, environment.token.refresh_expiration_time)
 
       if (writeAccessToken === 'OK' && writeRefreshToken === 'OK') {
-        return token
+        return accessTokenData
       }
 
       throw Error('Failed to write tokens')

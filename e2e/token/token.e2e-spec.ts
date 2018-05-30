@@ -2,6 +2,7 @@ import * as express from 'express'
 import * as axios from 'axios'
 import * as AxiosMockAdapter from 'axios-mock-adapter'
 import * as request from 'supertest'
+import { expect } from 'chai'
 import { Test } from '@nestjs/testing'
 import { TokenModule } from '../../src/app/token'
 import { TokenService } from '../../src/app/token/token.service'
@@ -43,10 +44,13 @@ describe('TokenService', () => {
         username: 'test@test.com',
         password: '123456'
       })
-      .expect(202)
+      .expect(200)
       .expect('Content-Type', /json/)
       .then(response => {
-        expect(response.body.email).toBe('test@test.com')
+        expect(response.body.access_token).to.be.a('string')
+        expect(response.body.expires_in).to.be.a('number')
+        expect(response.body.refresh_token).to.be.a('string')
+        expect(response.body.token_type).to.eql('Bearer')
       })
   })
 
