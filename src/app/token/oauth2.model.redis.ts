@@ -24,7 +24,7 @@ export type DecodedToken = {
 const GRANT_TYPE = 'password'
 
 const KEYS = {
-  TOKEN: val => `token:${val}`,
+  TOKEN: val => `tokens:${val}`,
   CLIENT: val => `clients:${val}`,
   REFRESH_TOKEN: val => `refresh_tokens:${val}`,
   GRANT_TYPES: val => `clients:${val}:grant_types`,
