@@ -185,8 +185,9 @@ export class OAuth2ModelRedis implements PasswordModel { // , RefreshTokenModel,
 
     if (user && user.data && user.data.email) {
       return {
-        id: user.data._id,
-        email: user.data.email
+        id: user.data.id,
+        email: user.data.email,
+        username: user.data.username
       }
     }
 
@@ -349,7 +350,6 @@ export class OAuth2ModelRedis implements PasswordModel { // , RefreshTokenModel,
       iss: environment.token.issuer,
       aud: 'client_id', // TODO: should be set properly
       scope,
-      email: user.email,
       // email_verified: ...
       sub: user.id || 'unique id missing',
       exp: issuedAt + environment.token.expiration_time + leeway,
