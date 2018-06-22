@@ -352,6 +352,7 @@ export class OAuth2ModelRedis implements PasswordModel { // , RefreshTokenModel,
       scope,
       // email_verified: ...
       sub: user.id || 'unique id missing',
+      username: user.username,
       exp: issuedAt + environment.token.expiration_time + leeway,
       iat: issuedAt
       // profile: user,

@@ -33,7 +33,8 @@ describe('TokenService', () => {
       email: 'test@test.com',
       password: '123456'
     }).reply(202, {
-      _id: 'test-user-id',
+      id: 'test-user-id',
+      username: 'test-user',
       email: 'test@test.com'
     })
 

@@ -16,7 +16,9 @@
     "e2e": "jest --config=e2e/jest-e2e.json --forceExit",
     "e2e:watch": "jest --watch --config=e2e/jest-e2e.json",
     "semantic-release": "semantic-release",
-    "travis-deploy-once": "travis-deploy-once"
+    "travis-deploy-once": "travis-deploy-once",
+    "build": "docker build -t authumn/token-service:latest .",
+    "push": "docker push authumn/token-service:latest"
   },
   "dependencies": {
     "@nestjs/common": "^5.0.1",
