@@ -166,9 +166,9 @@ export class OAuth2ModelRedis implements PasswordModel { // , RefreshTokenModel,
    *                          The user object is completely transparent to oauth2-server
    *                          and is simply used as input to other model functions.
    */
-  async getUser (username: string, password: string): Promise<User | false> {
+  async getUser (login: string, password: string): Promise<User | false> {
     const data = {
-      email: username,
+      login,
       password
     }
 
