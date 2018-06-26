@@ -30,7 +30,7 @@ describe('TokenService', () => {
 
   it(`/POST token/login`, () => {
     axiosMock.onPost('http://test.com/api/user/login', {
-      email: 'test@test.com',
+      login: 'test@test.com',
       password: '123456'
     }).reply(202, {
       id: 'test-user-id',
